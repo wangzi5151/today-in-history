@@ -1,0 +1,25 @@
+R_DEF: Internal format may change without notice
+local
+color accent
+color background
+color card
+color primary
+color primaryDark
+color surface
+color text
+color textSecondary
+mipmap ic_launcher
+mipmap ic_launcher_foreground
+mipmap ic_launcher_round
+string app_name
+string calendar
+string error
+string events_of
+string favorite_added
+string favorite_removed
+string favorites
+string loading
+string no_data
+string share
+string today
+style Theme.TodayInHistory

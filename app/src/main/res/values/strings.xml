@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">历史上的今天</string>
+    <string name="today">今日</string>
+    <string name="calendar">日历</string>
+    <string name="favorites">收藏</string>
+    <string name="no_data">暂无数据</string>
+    <string name="loading">加载中…</string>
+    <string name="error">加载失败，请重试</string>
+    <string name="favorite_added">已收藏</string>
+    <string name="favorite_removed">已取消收藏</string>
+    <string name="share">分享</string>
+    <string name="events_of">%1$d月%2$d日 的历史事件</string>
+</resources>
