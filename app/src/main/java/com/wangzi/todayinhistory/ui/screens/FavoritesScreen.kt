@@ -8,7 +8,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.wangzi.todayinhistory.model.HistoricalEvent
 import com.wangzi.todayinhistory.ui.components.EventCard
-import com.wangzi.todayinhistory.ui.theme.*
 import com.wangzi.todayinhistory.ui.viewmodel.HistoryViewModel
 @Composable
 fun FavoritesScreen(vm: HistoryViewModel) {
@@ -16,17 +15,30 @@ fun FavoritesScreen(vm: HistoryViewModel) {
     val favEvents = ui.events.filter { vm.isFav(it) }
     Scaffold(
         bottomBar = {
-            NavigationBar {
-                listOf("首页", "日历", "收藏").forEachIndexed { i, s ->
-                    NavigationBarItem(selected = false, onClick = {}, icon = { Text(if (i==0) "🏠" else if (i==1) "📅" else "⭐") }, label = { Text(s) })
-                }
+            BottomAppBar {
+                ListItem(
+                    leading = Icon(Icons.Default.Favorite, tint = Primary),
+                    title = { Text("收藏", style = MaterialTheme.typography.titleMedium) },
+                    subtitle = { Text("(${favEvents.size})", style = MaterialTheme.typography.bodySmall) }
+                )
+               TrailingIcon(
+                    icon = {
+                        Icon(Icons.Default.Close, contentDescription = null) { /* 关闭按钮 */ }
+                    }
+                )
             }
         }
     ) { padding ->
         Column(modifier = Modifier.padding(padding).padding(12.dp)) {
             Text("我的收藏 (${favEvents.size})", style = MaterialTheme.typography.headlineMedium)
-            if (favEvents.isEmpty()) Text("还没有收藏", color = TextSec)
-            else LazyColumn { items(favEvents) { ev -> EventCard(ev, true, {}, {}) } }
+            if (favEvents.isEmpty()) {
+                // 显示鼓励性提示
+                Text("还没有收藏", color = TextSec,
+                    style = MaterialTheme.typography.bodyLarge,
+                    modifier = Modifier.align(Alignment.CenterHorizontally))
+            } else {
+                LazyColumn { items(favEvents) { ev -> EventCard(ev, true, {}, {}) } }
+            }
         }
     }
 }

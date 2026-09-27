@@ -4,7 +4,12 @@ import androidx.compose.material3.darkColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 private val DarkColorScheme = darkColorScheme(
-    primary = Primary, onPrimary = Text, background = Bg, surface = Surface, onSurface = Text
+    primary = Primary, onPrimary = Text, background = Bg, surface = Surface, onSurface = Text,
+    primaryContainer = Surface, onPrimaryContainer = TextSec,
+    secondary = Accent, onSecondary = Bg,
+    tertiary = Primary, onTertiary = Text,
+    inversePrimary = PrimaryDark, inverseSurface = TextSec,
+    error = Warning, onError = Text
 )
 @Composable
 fun TodayInHistoryTheme(content: @Composable () -> Unit) {
