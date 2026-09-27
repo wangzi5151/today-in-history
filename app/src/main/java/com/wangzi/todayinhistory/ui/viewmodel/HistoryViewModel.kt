@@ -28,8 +28,9 @@ class HistoryViewModel(repository: HistoryRepository) : ViewModel() {
         viewModelScope.launch {
             val local = repo.getEventsFor(month, day)
             val remote = repo.fetchFromApi(month, day)
-            val all = (remote + local).groupBy { it.y }
-                .values.flatten().sortedByDescending { it.y }
+            val all = (remote + local)
+                .distinctBy { "${it.y}-${it.t}" }
+                .sortedByDescending { it.y }
             _ui.value = _ui.value.copy(events = all, loading = false, favs = repo.getFavorites())
         }
     }

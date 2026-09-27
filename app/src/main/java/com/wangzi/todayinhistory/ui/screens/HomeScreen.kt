@@ -8,6 +8,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import com.wangzi.todayinhistory.model.HistoricalEvent
 import com.wangzi.todayinhistory.ui.components.CategoryTabs
 import com.wangzi.todayinhistory.ui.components.DateSelector
 import com.wangzi.todayinhistory.ui.components.EventCard
@@ -18,6 +19,7 @@ import com.wangzi.todayinhistory.ui.viewmodel.HistoryViewModel
 fun HomeScreen(vm: HistoryViewModel) {
     val ui by vm.ui.collectAsState()
     val context = LocalContext.current
+    var category by remember { mutableStateOf("全部") }
     Column(modifier = Modifier.padding(16.dp)) {
         Row(horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
             Text("历史上的今天", style = MaterialTheme.typography.headlineMedium)
@@ -26,19 +28,25 @@ fun HomeScreen(vm: HistoryViewModel) {
         Spacer(Modifier.height(8.dp))
         DateSelector(ui.month, ui.day, onMonth = { m -> vm.load(m, ui.day) }, onDay = { d -> vm.load(ui.month, d) })
         Spacer(Modifier.height(4.dp))
-        CategoryTabs("全部") {}
+        CategoryTabs(category) { category = it }
         Spacer(Modifier.height(4.dp))
-        val dayEvents: List<com.wangzi.todayinhistory.model.HistoricalEvent> =
-            ui.events.filter { it.m == ui.month && it.d == ui.day }
+
+        val events: List<HistoricalEvent> =
+            if (category == "全部") ui.events else ui.events.filter { it.c == category }
+
         when {
             ui.loading -> CircularProgressIndicator(color = Primary)
-            dayEvents.isEmpty() -> Text("暂无数据", color = TextSec)
+            events.isEmpty() -> Column {
+                Text("该日期暂无记录", color = TextSec, style = MaterialTheme.typography.bodyLarge)
+                Spacer(Modifier.height(4.dp))
+                Text("可点击上方 ◀ ▶ 切换日期，或检查网络后重试", color = TextSec, style = MaterialTheme.typography.bodySmall)
+            }
             else -> LazyColumn(
-                modifier = Modifier.fillMaxHeight(0.7f),
+                modifier = Modifier.fillMaxHeight(0.75f),
                 verticalArrangement = Arrangement.spacedBy(8.dp),
-                contentPadding = PaddingValues(8.dp)
+                contentPadding = PaddingValues(vertical = 8.dp)
             ) {
-                items(dayEvents) { ev ->
+                items(events) { ev ->
                     EventCard(ev, vm.isFav(ev), onFav = { vm.toggleFav(ev) }, onShare = {
                         val shareTxt = "${ev.y}年 ${ev.t}"
                         val intent = android.content.Intent(android.content.Intent.ACTION_SEND).apply {
