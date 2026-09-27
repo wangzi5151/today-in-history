@@ -1,18 +1,20 @@
 package com.wangzi.todayinhistory.ui.components
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.rememberClickable
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.filled.FavoriteBorder
+import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.wangzi.todayinhistory.model.HistoricalEvent
 import com.wangzi.todayinhistory.ui.theme.*
+
 @Composable
 fun EventCard(event: HistoricalEvent, isFav: Boolean, onFav: () -> Unit, onShare: () -> Unit) {
-    // 根据分类确定颜色
     val categoryColor = when (event.c) {
         "事件" -> Primary
         "出生" -> Accent
@@ -22,41 +24,47 @@ fun EventCard(event: HistoricalEvent, isFav: Boolean, onFav: () -> Unit, onShare
     }
     Card(
         modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 4.dp),
-        elevation = CardElevation.value4,
-        colors = CardDefaults.cardColors(
-            containerColor = Card,
-            contentColor = Text
-        )
+        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
+        colors = CardDefaults.cardColors(containerColor = Card, contentColor = Text)
     ) {
-        Column(modifier = Modifier.padding(12.dp), verticalAlignment = Alignment.Top) {
-            // 顶部行：年份 + 收藏图标
-            Row(horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-                Text(event.y.toString(), style = MaterialTheme.typography.headlineSmall, color = categoryColor)
-                FavoriteToggle(isFav, onFav)
+        Column(modifier = Modifier.padding(12.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(event.y.toString(), style = MaterialTheme.typography.headlineMedium, color = categoryColor, modifier = Modifier.weight(1f))
+                IconButton(onClick = onFav) {
+                    Icon(
+                        if (isFav) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
+                        contentDescription = "收藏",
+                        tint = if (isFav) Primary else TextSec
+                    )
+                }
+                IconButton(onClick = onShare) {
+                    Icon(Icons.Default.Share, contentDescription = "分享", tint = TextSec)
+                }
             }
-            // 事件标题
-            Text(event.t, style = MaterialTheme.typography.titleLarge, color = Text, maxLines = 1, overflow = TextOverflow.Ellipsis)
-            // 简介/描述
+            Text(event.t, style = MaterialTheme.typography.titleLarge, color = Text, maxLines = 2, overflow = TextOverflow.Ellipsis)
             if (event.e.isNotEmpty()) {
-                Text(event.e, style = MaterialTheme.typography.bodySmall, color = TextSec, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                Text(event.e, style = MaterialTheme.typography.bodySmall, color = TextSec, maxLines = 3, overflow = TextOverflow.Ellipsis)
             }
-            // 分类标签
-            Text(event.c, style = MaterialTheme.typography.bodySmall, color = categoryColor, modifier = Modifier.padding(top = 2.dp))
-            // 分享按钮
-            Spacer(Modifier.weight(1f))
-            IconButton(onClick = onShare) {
-                Icon(Icons.Default.Share, contentDescription = null, tint = TextSec)
-            }
+            Text(event.c, style = MaterialTheme.typography.bodySmall, color = categoryColor, modifier = Modifier.padding(top = 4.dp))
         }
     }
 }
+
 @Composable
-fun FavoriteToggle(isFav: Boolean, onClick: () -> Unit) {
-    IconButton(onClick = onClick) {
-        Icon(
-            if (isFav) Icons.Default.Favorite Else Icons.Default.OutlineFavorite,
-            contentDescription = null,
-            tint = if (isFav) Primary else TextSec
-        )
+fun DateSelector(month: Int, day: Int, onMonth: (Int) -> Unit, onDay: (Int) -> Unit) {
+    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.Center) {
+        OutlinedButton(onClick = { if (month > 1) onMonth(month - 1) }) { Text("◀") }
+        Text("$month/$day", style = MaterialTheme.typography.titleLarge, modifier = Modifier.padding(horizontal = 16.dp))
+        OutlinedButton(onClick = { if (month < 12) onMonth(month + 1) }) { Text("▶") }
+    }
+}
+
+@Composable
+fun CategoryTabs(selected: String, onSelect: (String) -> Unit) {
+    val cats = listOf("全部", "事件", "出生", "逝世", "节日")
+    Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+        cats.forEach { c ->
+            FilterChip(selected = c == selected, onClick = { onSelect(c) }, label = { Text(c) })
+        }
     }
 }
