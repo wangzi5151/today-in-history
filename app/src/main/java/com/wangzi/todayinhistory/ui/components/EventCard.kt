@@ -29,7 +29,12 @@ fun EventCard(event: HistoricalEvent, isFav: Boolean, onFav: () -> Unit, onShare
     ) {
         Column(modifier = Modifier.padding(12.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(event.y.toString(), style = MaterialTheme.typography.headlineMedium, color = categoryColor, modifier = Modifier.weight(1f))
+                val yearText = when {
+                    event.y < 0 -> "前${-event.y}"
+                    event.y == 0 -> "——"
+                    else -> event.y.toString()
+                }
+                Text(yearText, style = MaterialTheme.typography.headlineMedium, color = categoryColor, modifier = Modifier.weight(1f))
                 IconButton(onClick = onFav) {
                     Icon(
                         if (isFav) Icons.Default.Favorite else Icons.Default.FavoriteBorder,

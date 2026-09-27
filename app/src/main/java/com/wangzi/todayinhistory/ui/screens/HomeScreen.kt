@@ -23,7 +23,7 @@ fun HomeScreen(vm: HistoryViewModel) {
     Column(modifier = Modifier.padding(16.dp)) {
         Row(horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
             Text("历史上的今天", style = MaterialTheme.typography.headlineMedium)
-            Text("${ui.month}月${ui.day}日", style = MaterialTheme.typography.bodyLarge, color = TextSec)
+            Text("${ui.month}月${ui.day}日 · ${ui.events.size}条", style = MaterialTheme.typography.bodyLarge, color = TextSec)
         }
         Spacer(Modifier.height(8.dp))
         DateSelector(ui.month, ui.day, onMonth = { m -> vm.load(m, ui.day) }, onDay = { d -> vm.load(ui.month, d) })
