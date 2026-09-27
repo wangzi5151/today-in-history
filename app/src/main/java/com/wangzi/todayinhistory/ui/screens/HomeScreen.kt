@@ -20,41 +20,51 @@ fun HomeScreen(vm: HistoryViewModel) {
     val ui by vm.ui.collectAsState()
     val context = LocalContext.current
     var category by remember { mutableStateOf("全部") }
-    Column(modifier = Modifier.padding(16.dp)) {
-        Row(horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-            Text("历史上的今天", style = MaterialTheme.typography.headlineMedium)
-            Text("${ui.month}月${ui.day}日 · ${ui.events.size}条", style = MaterialTheme.typography.bodyLarge, color = TextSec)
-        }
-        Spacer(Modifier.height(8.dp))
-        DateSelector(ui.month, ui.day, onMonth = { m -> vm.load(m, ui.day) }, onDay = { d -> vm.load(ui.month, d) })
-        Spacer(Modifier.height(4.dp))
-        CategoryTabs(category) { category = it }
-        Spacer(Modifier.height(4.dp))
 
-        val events: List<HistoricalEvent> =
-            if (category == "全部") ui.events else ui.events.filter { it.c == category }
+    val events: List<HistoricalEvent> = remember(ui.events, category) {
+        if (category == "全部") ui.events else ui.events.filter { it.c == category }
+    }
+
+    Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
+        Text("历史上的今天", style = MaterialTheme.typography.headlineMedium, color = Primary)
+        Spacer(Modifier.height(4.dp))
+        Text(
+            "${ui.month}月${ui.day}日 · 共 ${events.size} 条",
+            style = MaterialTheme.typography.bodyLarge,
+            color = TextSec
+        )
+        Spacer(Modifier.height(8.dp))
+        DateSelector(
+            ui.month, ui.day,
+            onMonth = { m -> vm.load(m, ui.day) },
+            onDay = { d -> vm.load(ui.month, d) }
+        )
+        Spacer(Modifier.height(8.dp))
+        CategoryTabs(category) { category = it }
+        Spacer(Modifier.height(8.dp))
 
         when {
-            ui.loading -> CircularProgressIndicator(color = Primary)
-            events.isEmpty() -> Column {
-                Text("该日期暂无记录", color = TextSec, style = MaterialTheme.typography.bodyLarge)
-                Spacer(Modifier.height(4.dp))
-                Text("可点击上方 ◀ ▶ 切换日期，或检查网络后重试", color = TextSec, style = MaterialTheme.typography.bodySmall)
+            ui.loading -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                CircularProgressIndicator(color = Primary)
             }
+            events.isEmpty() -> Text("该日期暂无记录", color = TextSec)
             else -> LazyColumn(
-                modifier = Modifier.fillMaxHeight(0.75f),
-                verticalArrangement = Arrangement.spacedBy(8.dp),
-                contentPadding = PaddingValues(vertical = 8.dp)
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 items(events) { ev ->
-                    EventCard(ev, vm.isFav(ev), onFav = { vm.toggleFav(ev) }, onShare = {
-                        val shareTxt = "${ev.y}年 ${ev.t}"
-                        val intent = android.content.Intent(android.content.Intent.ACTION_SEND).apply {
-                            type = "text/plain"
-                            putExtra(android.content.Intent.EXTRA_TEXT, shareTxt)
+                    EventCard(
+                        ev, vm.isFav(ev),
+                        onFav = { vm.toggleFav(ev) },
+                        onShare = {
+                            val shareTxt = "${ev.y}年 ${ev.t}"
+                            val intent = android.content.Intent(android.content.Intent.ACTION_SEND).apply {
+                                type = "text/plain"
+                                putExtra(android.content.Intent.EXTRA_TEXT, shareTxt)
+                            }
+                            context.startActivity(android.content.Intent.createChooser(intent, "分享"))
                         }
-                        context.startActivity(android.content.Intent.createChooser(intent, "分享"))
-                    })
+                    )
                 }
             }
         }
