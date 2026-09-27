@@ -9,14 +9,14 @@ import kotlinx.coroutines.launch
 
 data class UiState(
     val events: List<HistoricalEvent> = emptyList(),
+    val favorites: List<HistoricalEvent> = emptyList(),
     val loading: Boolean = false,
     val month: Int = java.util.Calendar.getInstance().get(java.util.Calendar.MONTH) + 1,
-    val day: Int = java.util.Calendar.getInstance().get(java.util.Calendar.DAY_OF_MONTH),
-    val favs: Set<String> = emptySet()
+    val day: Int = java.util.Calendar.getInstance().get(java.util.Calendar.DAY_OF_MONTH)
 )
 
 class HistoryViewModel(private val repo: HistoryRepository) : ViewModel() {
-    private val _ui = MutableStateFlow(UiState())
+    private val _ui = MutableStateFlow(UiState(favorites = repo.getFavoriteEvents()))
     val ui: StateFlow<UiState> = _ui
 
     init { loadForToday() }
@@ -33,19 +33,15 @@ class HistoryViewModel(private val repo: HistoryRepository) : ViewModel() {
             _ui.value = _ui.value.copy(
                 events = local.sortedByDescending { it.y },
                 loading = false,
-                favs = repo.getFavorites()
+                favorites = repo.getFavoriteEvents()
             )
         }
     }
 
     fun toggleFav(event: HistoricalEvent) {
-        val key = "${event.m}-${event.d}-${event.y}-${event.t}"
-        repo.toggleFavorite(key)
-        _ui.value = _ui.value.copy(favs = repo.getFavorites())
+        repo.toggleFavorite(event)
+        _ui.value = _ui.value.copy(favorites = repo.getFavoriteEvents())
     }
 
-    fun isFav(event: HistoricalEvent): Boolean {
-        val key = "${event.m}-${event.d}-${event.y}-${event.t}"
-        return repo.isFavorite(key)
-    }
+    fun isFav(event: HistoricalEvent): Boolean = repo.isFavorite(event)
 }

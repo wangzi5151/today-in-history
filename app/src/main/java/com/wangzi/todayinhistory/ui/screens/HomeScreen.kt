@@ -12,6 +12,7 @@ import com.wangzi.todayinhistory.model.HistoricalEvent
 import com.wangzi.todayinhistory.ui.components.CategoryTabs
 import com.wangzi.todayinhistory.ui.components.DateSelector
 import com.wangzi.todayinhistory.ui.components.EventCard
+import com.wangzi.todayinhistory.ui.components.EventDetailDialog
 import com.wangzi.todayinhistory.ui.theme.*
 import com.wangzi.todayinhistory.ui.viewmodel.HistoryViewModel
 
@@ -20,6 +21,7 @@ fun HomeScreen(vm: HistoryViewModel) {
     val ui by vm.ui.collectAsState()
     val context = LocalContext.current
     var category by remember { mutableStateOf("全部") }
+    var selected by remember { mutableStateOf<HistoricalEvent?>(null) }
 
     val events: List<HistoricalEvent> = remember(ui.events, category) {
         if (category == "全部") ui.events else ui.events.filter { it.c == category }
@@ -50,23 +52,41 @@ fun HomeScreen(vm: HistoryViewModel) {
             events.isEmpty() -> Text("该日期暂无记录", color = TextSec)
             else -> LazyColumn(
                 modifier = Modifier.weight(1f),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
+                verticalArrangement = Arrangement.spacedBy(6.dp)
             ) {
                 items(events) { ev ->
                     EventCard(
                         ev, vm.isFav(ev),
                         onFav = { vm.toggleFav(ev) },
                         onShare = {
-                            val shareTxt = "${ev.y}年 ${ev.t}"
+                            val txt = "${ev.y}年 ${ev.t}"
                             val intent = android.content.Intent(android.content.Intent.ACTION_SEND).apply {
                                 type = "text/plain"
-                                putExtra(android.content.Intent.EXTRA_TEXT, shareTxt)
+                                putExtra(android.content.Intent.EXTRA_TEXT, txt)
                             }
                             context.startActivity(android.content.Intent.createChooser(intent, "分享"))
-                        }
+                        },
+                        onClick = { selected = ev }
                     )
                 }
             }
         }
+    }
+
+    selected?.let { ev ->
+        EventDetailDialog(
+            event = ev,
+            isFav = vm.isFav(ev),
+            onFav = { vm.toggleFav(ev) },
+            onShare = {
+                val txt = "${ev.y}年 ${ev.t}"
+                val intent = android.content.Intent(android.content.Intent.ACTION_SEND).apply {
+                    type = "text/plain"
+                    putExtra(android.content.Intent.EXTRA_TEXT, txt)
+                }
+                context.startActivity(android.content.Intent.createChooser(intent, "分享"))
+            },
+            onDismiss = { selected = null }
+        )
     }
 }

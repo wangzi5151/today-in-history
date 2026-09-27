@@ -76,18 +76,30 @@ class HistoryRepository(private val context: Context) {
         }
     }
 
-    // ---------- 收藏 ----------
-    fun getFavorites(): Set<String> = prefs.getStringSet("favs", setOf()) ?: setOf()
+    // ---------- 收藏（保存完整事件，跨日期可用） ----------
+    private fun keyOf(e: HistoricalEvent) = "${e.m}-${e.d}-${e.y}-${e.t}"
 
-    fun toggleFavorite(key: String): Boolean {
-        val favs = prefs.getStringSet("favs", setOf())?.toMutableSet() ?: mutableSetOf()
-        if (favs.contains(key)) favs.remove(key) else favs.add(key)
-        prefs.edit().putStringSet("favs", favs).apply()
-        return favs.contains(key)
+    fun getFavoriteEvents(): List<HistoricalEvent> {
+        val json = prefs.getString("fav_events", "[]") ?: "[]"
+        return try {
+            gson.fromJson<List<HistoricalEvent>>(json, object : TypeToken<List<HistoricalEvent>>() {}.type) ?: emptyList()
+        } catch (e: Exception) {
+            emptyList()
+        }
     }
 
-    fun isFavorite(key: String): Boolean =
-        prefs.getStringSet("favs", setOf())?.contains(key) ?: false
+    fun isFavorite(event: HistoricalEvent): Boolean =
+        getFavoriteEvents().any { keyOf(it) == keyOf(event) }
+
+    fun toggleFavorite(event: HistoricalEvent): Boolean {
+        val list = getFavoriteEvents().toMutableList()
+        val k = keyOf(event)
+        val existing = list.firstOrNull { keyOf(it) == k }
+        val added = existing == null
+        if (added) list.add(event) else list.remove(existing)
+        prefs.edit().putString("fav_events", gson.toJson(list)).apply()
+        return added
+    }
 
     // ---------- 响应模型 ----------
     private data class SixtyResponse(val code: Int?, val data: SixtyData?)
