@@ -8,6 +8,7 @@ import kotlinx.coroutines.withContext
 class HistoryRepository(private val context: Context) {
     private val gson = Gson()
     private val prefs = context.getSharedPreferences("favorites", Context.MODE_PRIVATE)
+    private val netCache = context.getSharedPreferences("network_cache", Context.MODE_PRIVATE)
     private val monthCache = HashMap<Int, List<HistoricalEvent>>()
 
     // ---------- 离线数据（按月按需加载，共 3 万余条） ----------
@@ -25,8 +26,37 @@ class HistoryRepository(private val context: Context) {
         return list
     }
 
+    private fun cacheKey(month: Int, day: Int) = "events_%02d_%02d".format(month, day)
+
+    private fun getCachedEvents(month: Int, day: Int): List<HistoricalEvent> {
+        val json = netCache.getString(cacheKey(month, day), null) ?: return emptyList()
+        return try {
+            gson.fromJson<List<HistoricalEvent>>(json, object : TypeToken<List<HistoricalEvent>>() {}.type) ?: emptyList()
+        } catch (e: Exception) {
+            emptyList()
+        }
+    }
+
+    private fun saveCachedEvents(month: Int, day: Int, events: List<HistoricalEvent>) {
+        netCache.edit().putString(cacheKey(month, day), gson.toJson(events)).apply()
+    }
+
+    private fun mergeEvents(primary: List<HistoricalEvent>, secondary: List<HistoricalEvent>): List<HistoricalEvent> =
+        (primary + secondary).distinctBy { keyOf(it) }
+
+    // 本地优先：先返回离线资源 + 上次联网缓存，网络只做增量补充。
     suspend fun getEventsFor(month: Int, day: Int): List<HistoricalEvent> = withContext(Dispatchers.IO) {
-        loadMonth(month).filter { it.d == day }
+        val local = loadMonth(month).filter { it.d == day }
+        mergeEvents(local, getCachedEvents(month, day)).sortedByDescending { it.y }
+    }
+
+    // 返回 null 表示本次刷新失败（超时/无网络/接口无数据），调用方继续使用本地数据。
+    suspend fun refreshEvents(month: Int, day: Int): List<HistoricalEvent>? = withContext(Dispatchers.IO) {
+        val remote = fetchFromApi(month, day)
+        if (remote.isEmpty()) return@withContext null
+        saveCachedEvents(month, day, remote)
+        val local = loadMonth(month).filter { it.d == day }
+        mergeEvents(remote, local).sortedByDescending { it.y }
     }
 
     // ---------- 在线数据：优先国内可访问的 60s API，失败再用维基百科 ----------

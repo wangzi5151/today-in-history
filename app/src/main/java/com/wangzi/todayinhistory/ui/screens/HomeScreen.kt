@@ -35,6 +35,12 @@ fun HomeScreen(vm: HistoryViewModel) {
             style = MaterialTheme.typography.bodyLarge,
             color = TextSec
         )
+        if (ui.refreshing) {
+            Text("正在联网更新…", style = MaterialTheme.typography.bodySmall, color = Success)
+        }
+        ui.error?.let {
+            Text(it, style = MaterialTheme.typography.bodySmall, color = Warning)
+        }
         Spacer(Modifier.height(8.dp))
         DateSelector(
             ui.month, ui.day,
